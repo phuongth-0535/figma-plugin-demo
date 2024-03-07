@@ -1,5 +1,5 @@
 ---
 Title: figma-plugin-demo
-Author: me
+Author: not-me
 ---
 # figma-plugin-demo
