@@ -2,6 +2,8 @@ name: Puppeteer screen capture
 
 on:
   push:
+    branches-ignore: 
+      - '**-patch-**'
 
   pull_request:
 
