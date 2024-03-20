@@ -1,0 +1,56 @@
+name: Puppeteer screen capture
+
+on:
+  push:
+
+  pull_request:
+
+jobs:
+  screenshot:
+    name: Screenshot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Puppeteer
+        run: npm install puppeteer
+      
+      # Using http-server to serve files
+      - name: Serve index.html
+        uses: Eun/http-server-action@v1
+        with:
+          directory: ${{ github.workspace }}
+          port: 8080
+          index-files: |
+            ["index.html", "index.htm"]
+          allowed-methods: |
+            ["GET", "HEAD"]
+          content-types: |
+            {
+              "appcache": "text/cache-manifest",
+              "css": "text/css",
+              "gif": "image/gif",
+              "html": "text/html",
+              "ico": "image/x-icon",
+              "jpeg": "image/jpeg",
+              "jpg": "image/jpeg",
+              "js": "text/javascript",
+              "json": "application/json",
+              "png": "image/png",
+              "txt": "text/plain",
+              "xml": "text/xml"
+            }
+          log: "log.txt"
+          logTime: "false"
+      
+      - name: Screen capture
+        run: node ./screenshot.js
+      
+      - name: Save screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          path: 01_screenshot.png
