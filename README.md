@@ -6,3 +6,4 @@ Author: me
 
 This implement new section design
 Implement section 4
+Screen capture test 1
