@@ -14,15 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Puppeteer
-        run: npm install puppeteer
-      
-      # Using http-server to serve files
-      - name: Serve index.html
+      - name: Serve Files
         uses: Eun/http-server-action@v1
         with:
           directory: ${{ github.workspace }}
@@ -48,11 +40,12 @@ jobs:
             }
           log: "log.txt"
           logTime: "false"
-      
-      - name: Screen capture
-        run: node ./screenshot.js
-      
-      - name: Save screenshot
-        uses: actions/upload-artifact@v4
+
+      - name: Screenshot
+        uses: ./.github/actions/puppeteer
         with:
-          path: 01_screenshot.png
+          url: http://localhost:8080
+          use-commit-message: 'true'
+          selector: '.section-2 #button-3'
+          output: 01_screenshot.png
+

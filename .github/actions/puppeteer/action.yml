@@ -1,0 +1,73 @@
+name: Screen capture by Puppeteer
+description: Capture a screenshot of a webpage, element, area using Puppeteer
+inputs:
+  url:
+    description: 'URL of the webpage to capture'
+    required: true
+  use-commit-message:
+    description: 'Extract selector from commit message. Use [[element: selector]] in commit message to extract selector.'
+    required: false
+    default: 'false'
+  selector:
+    description: 'CSS selector of the element to capture'
+    required: false
+  output:
+    description: 'Path to save the screenshot'
+    required: false
+    default: 'screenshot.png'
+outputs:
+  screenshot:
+    description: 'Screenshot was captured and save at:'
+    value: ${{ steps.setOutput.outputs.screenshot }}
+  artifacts:
+    description: 'Screenshot artifact URL:'
+    value: ${{ steps.saveScreenshot.outputs.artifact-url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract selector from commit message
+      id: extractSelector
+      run: |
+        if [[ "${{ inputs.use-commit-message }}" == "true" ]]; then
+          echo "Extracting selector from commit message:"
+          export SELECTOR=$(echo "${{ github.event.head_commit.message }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
+        else
+          echo "Using selector from input:"
+          export SELECTOR="${{ inputs.selector }}"
+        fi
+        echo "Selector: $SELECTOR"
+        echo "selector=$(echo $SELECTOR)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Install Node 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Puppeteer & process env
+      shell: bash
+      run: npm install puppeteer dotenv
+
+    - name: Capture screenshot
+      id: captureScreen
+      shell: bash
+      run: node ${{ github.action_path }}/capture.js || true
+      env:
+        ACTION_INPUTS_URL: ${{ inputs.url }}
+        ACTION_INPUTS_SELECTOR: ${{ steps.extractSelector.outputs.selector }}
+        ACTION_INPUTS_OUTPUT: ${{ inputs.output }}
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+
+    - name: Save screenshot
+      id: saveScreenshot
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshot
+        path: ${{ inputs.output }}
+
+    - name: Set output
+      id: setOutput
+      run: |
+        echo "screenshot=$(echo ${{ inputs.url }})" >> $GITHUB_OUTPUT
+      shell: bash

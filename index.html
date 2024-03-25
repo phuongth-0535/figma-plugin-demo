@@ -1,33 +1,46 @@
 <!DOCTYPE html>
 <html>
-<style>
-table, th, td {
-  border:1px solid black;
-}
-</style>
+<head>
+  <title>Page Title</title>
+  <style>
+    .section {
+      margin: 20px 0;
+    }
+    .btn1 {
+      background-color: rgba(110, 172, 18, 0.47);
+      color: black;
+      padding: 10px;
+      margin: 10px;
+      border: 1px solid red;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .btn2 {
+      background-color: rgba(192, 17, 176, 0.62);
+      color: white;
+      padding: 10px;
+      margin: 10px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
 <body>
 
-<h2>A basic HTML table</h2>
+<div class="section-1">
+  <button id="button-1" class="btn1">Button 1</button>
+  <button id="button-2" class="btn2">Button 2</button>
+</div>
 
-<table style="width:100%">
-  <tr>
-    <th>Company</th>
-    <th>Contact</th>
-    <th>Country</th>
-  </tr>
-  <tr>
-    <td>Alfreds Futterkiste</td>
-    <td>Maria Anders</td>
-    <td>Germany</td>
-  </tr>
-  <tr>
-    <td>Centro comercial Moctezuma</td>
-    <td>Francisco Chang</td>
-    <td>Mexico</td>
-  </tr>
-</table>
+<div class="section-2">
+  <button id="button-3" class="btn1">Button 3</button>
+  <button id="button-4" class="btn2">Button 4</button>
+</div>
 
-<p>To understand the example better, we have added borders to the table.</p>
+<div class="section-3" id="group-button-1">
+  <button class="btn1">Button 5</button>
+  <button class="btn2">Button 6</button>
+</div>
 
 </body>
 </html>
