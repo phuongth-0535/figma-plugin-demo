@@ -48,7 +48,7 @@ runs:
         fi
         
         if [[ -z "$SELECTOR" ]]; then
-          echo "Selector was not defined. We will capture the whole page.\n"
+          echo "Selector was not defined. We will capture the whole page."
         fi
         
         echo "selector=$(echo $SELECTOR)" >> $GITHUB_OUTPUT
