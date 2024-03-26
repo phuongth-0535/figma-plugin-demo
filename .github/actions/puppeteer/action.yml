@@ -1,11 +1,12 @@
 name: Screen capture by Puppeteer
+author: Son Dao Thai (@sondt-1245)
 description: Capture a screenshot of a webpage, element, area using Puppeteer
 inputs:
   url:
     description: 'URL of the webpage to capture'
     required: true
-  use-commit-message:
-    description: 'Extract selector from commit message. Use [[element: selector]] in commit message to extract selector.'
+  use-github-selector:
+    description: 'Extract selector from commit message/ pull request comment. Use [[element: <selector>]] in commit message or comment "/screenshot [[element: <selector>]]" in PR to extract selector.'
     required: false
     default: 'false'
   selector:
@@ -29,14 +30,27 @@ runs:
     - name: Extract selector from commit message
       id: extractSelector
       run: |
-        if [[ "${{ inputs.use-commit-message }}" == "true" ]]; then
-          echo "Extracting selector from commit message:"
+        if [[ "${{ inputs.use-github-selector }}" == "true" ]]; then
           export SELECTOR=$(echo "${{ github.event.head_commit.message }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
+          [[ $SELECTOR ]] &&  echo "Selector was found from Github commit message: $SELECTOR"
+          
+          # Find selector from pull request comment body
+          if [[ "${{ github.event.issue.pull_request }}" && '${{ github.event.comment.body }}' = /screenshot* ]]; then
+            export SELECTOR=$(echo "${{ github.event.comment.body }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
+            
+            echo "Comment on pull request ${{ github.event.comment.body }}"
+            [[ $SELECTOR ]] && echo "Selector was override from pull request comment body: $SELECTOR"
+            echo "comment-selector=true" >> $GITHUB_OUTPUT
+          fi
         else
-          echo "Using selector from input:"
           export SELECTOR="${{ inputs.selector }}"
+          echo "Using selector from Github Action input: $SELECTOR"
         fi
-        echo "Selector: $SELECTOR"
+        
+        if [[ -z "$SELECTOR" ]]; then
+          echo "Selector was not defined. We will capture the whole page.\n"
+        fi
+        
         echo "selector=$(echo $SELECTOR)" >> $GITHUB_OUTPUT
       shell: bash
 
@@ -66,8 +80,16 @@ runs:
         name: screenshot
         path: ${{ inputs.output }}
 
+    - name: Update comment
+      if: ${{ steps.extractSelector.outputs.comment-selector == 'true' }}
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ github.event.comment.id }}
+        body: "[screenshot archive](${{ steps.saveScreenshot.outputs.artifact-url }})"
+        reactions: eyes
+
     - name: Set output
       id: setOutput
       run: |
-        echo "screenshot=$(echo ${{ inputs.url }})" >> $GITHUB_OUTPUT
+        echo "screenshot=$(echo ${{ inputs.output }})" >> $GITHUB_OUTPUT
       shell: bash

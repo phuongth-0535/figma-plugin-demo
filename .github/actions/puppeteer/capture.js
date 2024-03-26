@@ -5,12 +5,16 @@ const puppeteer = require('puppeteer');
     const page = await browser.newPage();
     await page.goto(process.env.ACTION_INPUTS_URL);
 
-    if (process.env.ACTION_INPUTS_SELECTOR) {
-        await page.waitForSelector(process.env.ACTION_INPUTS_SELECTOR);
-        const element = await page.$(process.env.ACTION_INPUTS_SELECTOR);
-        await element.screenshot({path: process.env.ACTION_INPUTS_OUTPUT });
-    } else {
-        await page.screenshot({path: process.env.ACTION_INPUTS_OUTPUT });
+    try {
+        if (process.env.ACTION_INPUTS_SELECTOR) {
+            await page.waitForSelector(process.env.ACTION_INPUTS_SELECTOR);
+            const element = await page.$(process.env.ACTION_INPUTS_SELECTOR);
+            await element.screenshot({path: process.env.ACTION_INPUTS_OUTPUT });
+        } else {
+            await page.screenshot({path: process.env.ACTION_INPUTS_OUTPUT });
+        }
+    } catch (e) {
+        console.log("Capture screen failed.")
     }
 
     await browser.close();

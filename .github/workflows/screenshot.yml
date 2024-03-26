@@ -11,6 +11,7 @@ jobs:
   screenshot:
     name: Screenshot
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body , '/screenshot')) }}
     steps:
       - uses: actions/checkout@v3
 
@@ -45,7 +46,7 @@ jobs:
         uses: ./.github/actions/puppeteer
         with:
           url: http://localhost:8080
-          use-commit-message: 'true'
+          use-github-selector: 'true'
           selector: '.section-2 #button-3'
           output: 01_screenshot.png
 
