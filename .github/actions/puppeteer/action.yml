@@ -120,9 +120,9 @@ runs:
         script: |
           await github.rest.repos.createCommitStatus({
             owner: "${{ github.repository_owner }}",
-            repo: "${{ github.repository }}",
+            repo: "${{ github.event.repository.name }}",
             sha: "${{ github.sha }}",
             state: "${{ job.status }}",
-            target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            target_url: "${{ github.server_url }}/${{ github.event.repository.name }}/actions/runs/${{ github.run_id }}",
             context: `${{ github.workflow }} / Screen capture by Puppeteer (${{ github.event_name }})`,
           });
