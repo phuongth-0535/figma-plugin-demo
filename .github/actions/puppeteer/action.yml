@@ -112,6 +112,10 @@ runs:
         body: "[screenshot archive](${{ steps.saveScreenshot.outputs.artifact-url }})"
         reactions: eyes
 
+    - name: Get last commit
+      id: last_commit
+      run: echo sha=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
+
     - name: Github API Request
       if: ${{ github.event_name == 'issue_comment' }}
       uses: actions/github-script@v7
@@ -121,7 +125,7 @@ runs:
           await github.rest.repos.createCommitStatus({
             owner: "${{ github.repository_owner }}",
             repo: "${{ github.event.repository.name }}",
-            sha: "${{ github.sha }}",
+            sha: "${{ steps.last_commit.outputs.sha }}",
             state: "${{ job.status }}",
             target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             context: `${{ github.workflow }} / Screen capture by Puppeteer (${{ github.event_name }})`,
