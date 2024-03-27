@@ -118,11 +118,11 @@ runs:
       with:
         github-token: ${{ github.token }}
         script: |
-          await github.rest.repos.createCommitStatus({
+          await github.repos.createCommitStatus({
             owner: context.repo.owner,
             repo: context.repo.repo,
             state: context.job.status,
             sha: context.sha,
-            target_url: `${context.server_url}/${context.repository}/actions/runs/${context.run_id}`,
-            context: `${context.workflow} / Screen capture by Puppeteer (${context.event_name})`,
+            target_url: `${context.serverUrl}/${context.repository}/actions/runs/${context.runId}`,
+            context: `${context.workflow} / Screen capture by Puppeteer (${context.eventName})`,
           });
