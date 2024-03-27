@@ -118,7 +118,7 @@ runs:
       with:
         github-token: ${{ github.token }}
         script: |
-          await github.repos.createCommitStatus({
+          await github.rest.repos.createCommitStatus({
             owner: context.repo.owner,
             repo: context.repo.repo,
             state: context.job.status,
