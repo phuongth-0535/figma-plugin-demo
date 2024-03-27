@@ -52,11 +52,11 @@ runs:
         if [[ "${{ inputs.use-github-selector }}" == "true" ]]; then
           export SELECTOR=$(echo "${{ github.event.head_commit.message }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
           [[ $SELECTOR ]] &&  echo "Selector was found from Github commit message: $SELECTOR"
-        
+
           # Find selector from pull request comment body
           if [[ "${{ github.event.issue.pull_request }}" && '${{ github.event.comment.body }}' = /screenshot* ]]; then
             export SELECTOR=$(echo "${{ github.event.comment.body }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
-        
+
             echo "Comment on pull request ${{ github.event.comment.body }}"
             [[ $SELECTOR ]] && echo "Selector was override from pull request comment body: $SELECTOR"
             echo "comment-selector=true" >> $GITHUB_OUTPUT
@@ -65,11 +65,11 @@ runs:
           export SELECTOR="${{ inputs.selector }}"
           echo "Using selector from Github Action input: $SELECTOR"
         fi
-        
+
         if [[ -z "$SELECTOR" ]]; then
           echo "Selector was not defined. We will capture the whole page."
         fi
-        
+
         echo "selector=$(echo $SELECTOR)" >> $GITHUB_OUTPUT
       shell: bash
 
@@ -114,11 +114,15 @@ runs:
 
     - name: Github API Request
       if: ${{ github.event_name == 'issue_comment' }}
-      uses: octokit/request-action@v2.2.0
+      uses: actions/github-script@v7
       with:
-        route: POST ${{ fromJson(steps.request.outputs.data).statuses_url }}
-        state: ${{ job.status }}
-        target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        context: "${{ github.workflow }} / Screen capture by Puppeteer (${{ github.event_name }})"
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+        github-token: ${{ github.token }}
+        script: |
+          await github.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: context.job.status,
+            sha: context.sha,
+            target_url: `${context.server_url}/${context.repository}/actions/runs/${context.run_id}`,
+            context: `${context.workflow} / Screen capture by Puppeteer (${context.event_name})`,
+          });
