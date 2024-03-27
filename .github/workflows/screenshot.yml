@@ -1,12 +1,6 @@
 name: Puppeteer screen capture
 
 on:
-  push:
-    branches-ignore: 
-      - '**-patch-**'
-
-  pull_request:
-
   issue_comment:
     types: [ created ]
 
@@ -52,5 +46,4 @@ jobs:
           url: http://localhost:8080
           use-github-selector: 'true'
           selector: '.section-2 #button-3'
-          output: 01_screenshot.png
-
+          output: screenshot.png
