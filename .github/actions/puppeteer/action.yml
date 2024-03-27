@@ -114,6 +114,7 @@ runs:
 
     - name: Get last commit
       id: last_commit
+      shell: bash
       run: echo sha=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
 
     - name: Github API Request
