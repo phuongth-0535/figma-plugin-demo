@@ -119,10 +119,10 @@ runs:
         github-token: ${{ github.token }}
         script: |
           await github.rest.repos.createCommitStatus({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            sha: context.sha,
+            owner: "${{ github.repository_owner }}",
+            repo: "${{ github.repository }}",
+            sha: "${{ github.sha }}",
             state: "${{ job.status }}",
-            target_url: `${context.serverUrl}/${context.repository}/actions/runs/${context.runId}`,
-            context: `${context.workflow} / Screen capture by Puppeteer (${context.eventName})`,
+            target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            context: `${{ github.workflow }} / Screen capture by Puppeteer (${{ github.event_name }})`,
           });
