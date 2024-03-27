@@ -121,8 +121,8 @@ runs:
           await github.rest.repos.createCommitStatus({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            state: context.job.status,
             sha: context.sha,
+            state: "${{ job.status }}",
             target_url: `${context.serverUrl}/${context.repository}/actions/runs/${context.runId}`,
             context: `${context.workflow} / Screen capture by Puppeteer (${context.eventName})`,
           });
