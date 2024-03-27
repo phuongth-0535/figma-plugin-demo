@@ -27,17 +27,36 @@ outputs:
 runs:
   using: 'composite'
   steps:
+
+    # Because the action is triggered by issue_comment event, actions/checkout only checkout the code from the default branch.
+    # We need to check out to the right PR's branch to capture the screenshot.
+    - name: Github API Request
+      if: ${{ github.event_name == 'issue_comment' }}
+      id: request
+      uses: octokit/request-action@v2.2.0
+      with:
+        route: ${{ github.event.issue.pull_request.url }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Checkout to right branch
+      if: ${{ github.event_name == 'issue_comment' }}
+      uses: actions/checkout@v3
+      with:
+        token: ${{ github.token }}
+        ref: ${{ fromJson(steps.request.outputs.data).head.ref }}
+
     - name: Extract selector from commit message
       id: extractSelector
       run: |
         if [[ "${{ inputs.use-github-selector }}" == "true" ]]; then
           export SELECTOR=$(echo "${{ github.event.head_commit.message }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
           [[ $SELECTOR ]] &&  echo "Selector was found from Github commit message: $SELECTOR"
-          
+        
           # Find selector from pull request comment body
           if [[ "${{ github.event.issue.pull_request }}" && '${{ github.event.comment.body }}' = /screenshot* ]]; then
             export SELECTOR=$(echo "${{ github.event.comment.body }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
-            
+        
             echo "Comment on pull request ${{ github.event.comment.body }}"
             [[ $SELECTOR ]] && echo "Selector was override from pull request comment body: $SELECTOR"
             echo "comment-selector=true" >> $GITHUB_OUTPUT
@@ -80,7 +99,12 @@ runs:
         name: screenshot
         path: ${{ inputs.output }}
 
-    - name: Update comment
+    - name: Set Output
+      run: |
+        echo "screenshot=$(echo ${{ inputs.output }})" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Update PR's comment
       if: ${{ steps.extractSelector.outputs.comment-selector == 'true' }}
       uses: peter-evans/create-or-update-comment@v4
       with:
@@ -88,8 +112,13 @@ runs:
         body: "[screenshot archive](${{ steps.saveScreenshot.outputs.artifact-url }})"
         reactions: eyes
 
-    - name: Set output
-      id: setOutput
-      run: |
-        echo "screenshot=$(echo ${{ inputs.output }})" >> $GITHUB_OUTPUT
-      shell: bash
+    - name: Github API Request
+      if: ${{ github.event_name == 'issue_comment' }}
+      uses: octokit/request-action@v2.2.0
+      with:
+        route: POST ${{ fromJson(steps.request.outputs.data).statuses_url }}
+        state: ${{ job.status }}
+        target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        context: "${{ github.workflow }} / Screen capture by Puppeteer (${{ github.event_name }})"
+      env:
+        GITHUB_TOKEN: ${{ github.token }}

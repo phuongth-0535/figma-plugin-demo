@@ -1,1 +1,4 @@
 .idea
+
+# OS file
+.DS_Store
