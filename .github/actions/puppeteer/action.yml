@@ -118,7 +118,7 @@ runs:
       with:
         route: POST ${{ fromJson(steps.request.outputs.data).statuses_url }}
         state: ${{ job.status }}
-        target_url: "${{ steps.saveScreenshot.outputs.artifact-url }}"
+        target_url: "${{ github.api_url }}/repos/${{ github.repository }}/actions/artifacts/${{ steps.saveScreenshot.outputs.artifact-id }}"
         context: "Screenshot / ${{ github.workflow }} (artifact)"
       env:
         GITHUB_TOKEN: ${{ github.token }}
