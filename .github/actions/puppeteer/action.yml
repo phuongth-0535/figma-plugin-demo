@@ -118,7 +118,7 @@ runs:
       with:
         route: POST ${{ fromJson(steps.request.outputs.data).statuses_url }}
         state: ${{ job.status }}
-        target_url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        context: "${{ github.workflow }} / Screen capture by Puppeteer (${{ github.event_name }})"
+        target_url: "[screenshot archive](${{ steps.saveScreenshot.outputs.artifact-url }})"
+        context: "Screenshot / ${{ github.workflow }} (artifact)"
       env:
         GITHUB_TOKEN: ${{ github.token }}
