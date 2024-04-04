@@ -10,10 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sun-asterisk-research/puppeteer-play:latest
+      options: --user root:root
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body , '/screenshot')) }}
     permissions: write-all
     steps:
-      # - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       # - name: Serve Files
       #   uses: Eun/http-server-action@v1
