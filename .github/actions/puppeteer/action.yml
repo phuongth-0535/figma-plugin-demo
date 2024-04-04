@@ -59,7 +59,9 @@ runs:
       shell: bash
       run: |
         echo "{{ steps.extractSelector.outputs.playbook }}" > play.yml
+        su - pptruser
         node /pupptr-play/dist/index.js play.yml
+        exit
 
     - name: Save screenshot
       id: saveScreenshot
