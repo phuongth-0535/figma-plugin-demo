@@ -26,6 +26,8 @@ outputs:
 
 runs:
   using: 'composite'
+  container:
+    image: ghcr.io/sun-asterisk-research/puppeteer-play:latest
   steps:
 
     # Because the action is triggered by issue_comment event, actions/checkout only checkout the code from the default branch.
@@ -49,48 +51,17 @@ runs:
     - name: Extract selector from commit message
       id: extractSelector
       run: |
-        if [[ "${{ inputs.use-github-selector }}" == "true" ]]; then
-          export SELECTOR=$(echo "${{ github.event.head_commit.message }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
-          [[ $SELECTOR ]] &&  echo "Selector was found from Github commit message: $SELECTOR"
-        
-          # Find selector from pull request comment body
-          if [[ "${{ github.event.issue.pull_request }}" && '${{ github.event.comment.body }}' = /screenshot* ]]; then
-            export SELECTOR=$(echo "${{ github.event.comment.body }}" |  sed -n 's/.*\[\[element:\s*\([^]]*\)\]\].*/\1/p')
-        
-            echo "Comment on pull request ${{ github.event.comment.body }}"
-            [[ $SELECTOR ]] && echo "Selector was override from pull request comment body: $SELECTOR"
-            echo "comment-selector=true" >> $GITHUB_OUTPUT
-          fi
-        else
-          export SELECTOR="${{ inputs.selector }}"
-          echo "Using selector from Github Action input: $SELECTOR"
-        fi
-        
-        if [[ -z "$SELECTOR" ]]; then
-          echo "Selector was not defined. We will capture the whole page."
-        fi
-        
-        echo "selector=$(echo $SELECTOR)" >> $GITHUB_OUTPUT
-      shell: bash
+        export PLAYBOOK=$(echo "${{ github.event.comment.body }}" |  perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s')
 
-    - name: Install Node 20
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Install Puppeteer & process env
+        echo "playbook=$(echo $SELECTOR)" >> $GITHUB_OUTPUT
       shell: bash
-      run: npm install puppeteer dotenv
 
     - name: Capture screenshot
       id: captureScreen
       shell: bash
-      run: node ${{ github.action_path }}/capture.js || true
-      env:
-        ACTION_INPUTS_URL: ${{ inputs.url }}
-        ACTION_INPUTS_SELECTOR: ${{ steps.extractSelector.outputs.selector }}
-        ACTION_INPUTS_OUTPUT: ${{ inputs.output }}
-        GITHUB_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        echo "{{ steps.extractSelector.outputs.playbook }}" > play.yml
+        node /pupptr-play/dist/index.js play.yml
 
     - name: Save screenshot
       id: saveScreenshot
@@ -105,7 +76,6 @@ runs:
       shell: bash
 
     - name: Update PR's comment
-      if: ${{ steps.extractSelector.outputs.comment-selector == 'true' }}
       uses: peter-evans/create-or-update-comment@v4
       with:
         comment-id: ${{ github.event.comment.id }}
