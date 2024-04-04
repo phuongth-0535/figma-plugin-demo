@@ -63,7 +63,11 @@ jobs:
           COMMENT_BODY: |
             ${{ github.event.comment.body }}
         run: |
-          echo "$COMMENT_BODY" |  perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s' > /tmp/play.yml
+          echo "$COMMENT_BODY"
+          echo '----------------------'
+          echo "$COMMENT_BODY" | perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s'
+          echo '----------------------'
+          echo "$COMMENT_BODY" | perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s' > /tmp/play.yml
           cat /tmp/play.yml
           su - pptruser -c "node /pupptr-play/dist/index.js /tmp/play.yml"
 
