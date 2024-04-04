@@ -58,11 +58,12 @@ jobs:
           ref: ${{ fromJson(steps.request.outputs.data).head.ref }}
 
       - name: Capture screenshot
-        id: captureScreen
         env:
           COMMENT_BODY: |
             ${{ github.event.comment.body }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
+          echo "$GITHUB_TOKEN"
           echo "$COMMENT_BODY"
           echo '----------------------'
           echo "$COMMENT_BODY" | perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s'
