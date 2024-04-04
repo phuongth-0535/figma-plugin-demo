@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sun-asterisk-research/puppeteer-play:latest
-      options: --user root:root
+      options: --user root:root --cap-add=SYS_ADMIN
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body , '/screenshot')) }}
     permissions: write-all
     steps:
