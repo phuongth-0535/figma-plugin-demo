@@ -53,9 +53,7 @@ runs:
         COMMENT_BODY: ${{ github.event.comment.body }}
       run: |
         echo "$COMMENT_BODY" |  perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s' > play.yml
-        su - pptruser
-        node /pupptr-play/dist/index.js play.yml
-        exit
+        su - pptruser -c "node /pupptr-play/dist/index.js play.yml"
 
     - name: Save screenshot
       id: saveScreenshot
