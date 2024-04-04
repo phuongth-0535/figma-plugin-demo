@@ -26,8 +26,6 @@ outputs:
 
 runs:
   using: 'composite'
-  container:
-    image: ghcr.io/sun-asterisk-research/puppeteer-play:latest
   steps:
 
     # Because the action is triggered by issue_comment event, actions/checkout only checkout the code from the default branch.
