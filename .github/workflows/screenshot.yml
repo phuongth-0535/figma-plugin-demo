@@ -43,10 +43,53 @@ jobs:
       #     log: "log.txt"
       #     logTime: "false"
 
-      - name: Screenshot
-        uses: ./.github/actions/puppeteer
+      - name: Github API Request
+        id: request
+        uses: octokit/request-action@v2.2.0
         with:
-          url: http://localhost:8080
-          use-github-selector: 'true'
-          selector: '.section-2 #button-3'
-          output: screenshot.png
+          route: ${{ github.event.issue.pull_request.url }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Checkout to right branch
+        uses: actions/checkout@v3
+        with:
+          token: ${{ github.token }}
+          ref: ${{ fromJson(steps.request.outputs.data).head.ref }}
+
+      - name: Capture screenshot
+        id: captureScreen
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          echo "$COMMENT_BODY" |  perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s' > /tmp/play.yml
+          cat /tmp/play.yml
+          su - pptruser -c "node /pupptr-play/dist/index.js /tmp/play.yml"
+
+      - name: Save screenshot
+        id: saveScreenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot
+          path: ${{ inputs.output }}
+
+      - name: Set Output
+        run: |
+          echo "screenshot=$(echo ${{ inputs.output }})" >> $GITHUB_OUTPUT
+
+      - name: Update PR's comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          body: "[screenshot archive](${{ steps.saveScreenshot.outputs.artifact-url }})"
+          reactions: eyes
+
+      - name: Github API Request
+        uses: octokit/request-action@v2.2.0
+        with:
+          route: POST ${{ fromJson(steps.request.outputs.data).statuses_url }}
+          state: ${{ job.status }}
+          target_url: "${{ github.api_url }}/repos/${{ github.repository }}/actions/artifacts/${{ steps.saveScreenshot.outputs.artifact-id }}/zip"
+          context: "Screenshot / ${{ github.workflow }} (artifact)"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
