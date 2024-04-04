@@ -13,34 +13,34 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body , '/screenshot')) }}
     permissions: write-all
     steps:
-      - uses: actions/checkout@v3
+      # - uses: actions/checkout@v3
 
-      - name: Serve Files
-        uses: Eun/http-server-action@v1
-        with:
-          directory: ${{ github.workspace }}
-          port: 8080
-          index-files: |
-            ["index.html", "index.htm"]
-          allowed-methods: |
-            ["GET", "HEAD"]
-          content-types: |
-            {
-              "appcache": "text/cache-manifest",
-              "css": "text/css",
-              "gif": "image/gif",
-              "html": "text/html",
-              "ico": "image/x-icon",
-              "jpeg": "image/jpeg",
-              "jpg": "image/jpeg",
-              "js": "text/javascript",
-              "json": "application/json",
-              "png": "image/png",
-              "txt": "text/plain",
-              "xml": "text/xml"
-            }
-          log: "log.txt"
-          logTime: "false"
+      # - name: Serve Files
+      #   uses: Eun/http-server-action@v1
+      #   with:
+      #     directory: ${{ github.workspace }}
+      #     port: 8080
+      #     index-files: |
+      #       ["index.html", "index.htm"]
+      #     allowed-methods: |
+      #       ["GET", "HEAD"]
+      #     content-types: |
+      #       {
+      #         "appcache": "text/cache-manifest",
+      #         "css": "text/css",
+      #         "gif": "image/gif",
+      #         "html": "text/html",
+      #         "ico": "image/x-icon",
+      #         "jpeg": "image/jpeg",
+      #         "jpg": "image/jpeg",
+      #         "js": "text/javascript",
+      #         "json": "application/json",
+      #         "png": "image/png",
+      #         "txt": "text/plain",
+      #         "xml": "text/xml"
+      #       }
+      #     log: "log.txt"
+      #     logTime: "false"
 
       - name: Screenshot
         uses: ./.github/actions/puppeteer
