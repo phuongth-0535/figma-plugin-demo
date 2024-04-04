@@ -46,19 +46,11 @@ runs:
         token: ${{ github.token }}
         ref: ${{ fromJson(steps.request.outputs.data).head.ref }}
 
-    - name: Extract selector from commit message
-      id: extractSelector
-      run: |
-        export PLAYBOOK=$(echo "${{ github.event.comment.body }}" |  perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s')
-
-        echo "playbook=$(echo $SELECTOR)" >> $GITHUB_OUTPUT
-      shell: bash
-
     - name: Capture screenshot
       id: captureScreen
       shell: bash
       run: |
-        echo "{{ steps.extractSelector.outputs.playbook }}" > play.yml
+        echo "${{ github.event.comment.body }}" |  perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s') > play.yml
         su - pptruser
         node /pupptr-play/dist/index.js play.yml
         exit
