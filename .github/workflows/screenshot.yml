@@ -1,95 +1,88 @@
-name: Puppeteer screen capture
-
-on:
-  issue_comment:
-    types: [ created ]
-
-jobs:
+name: Screen capture by Puppeteer
+author: Son Dao Thai (@sondt-1245)
+description: Capture a screenshot of a webpage, element, area using Puppeteer
+inputs:
+  url:
+    description: 'URL of the webpage to capture'
+    required: true
+  use-github-selector:
+    description: 'Extract selector from commit message/ pull request comment. Use [[element: <selector>]] in commit message or comment "/screenshot [[element: <selector>]]" in PR to extract selector.'
+    required: false
+    default: 'false'
+  selector:
+    description: 'CSS selector of the element to capture'
+    required: false
+  output:
+    description: 'Path to save the screenshot'
+    required: false
+    default: 'screenshot.png'
+outputs:
   screenshot:
-    name: Screenshot
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/sun-asterisk-research/puppeteer-play:latest
-      options: --user root:root --cap-add=SYS_ADMIN
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body , '/screenshot')) }}
-    permissions: write-all
-    steps:
-      - uses: actions/checkout@v3
+    description: 'Screenshot was captured and save at:'
+    value: ${{ steps.setOutput.outputs.screenshot }}
+  artifacts:
+    description: 'Screenshot artifact URL:'
+    value: ${{ steps.saveScreenshot.outputs.artifact-url }}
 
-      # - name: Serve Files
-      #   uses: Eun/http-server-action@v1
-      #   with:
-      #     directory: ${{ github.workspace }}
-      #     port: 8080
-      #     index-files: |
-      #       ["index.html", "index.htm"]
-      #     allowed-methods: |
-      #       ["GET", "HEAD"]
-      #     content-types: |
-      #       {
-      #         "appcache": "text/cache-manifest",
-      #         "css": "text/css",
-      #         "gif": "image/gif",
-      #         "html": "text/html",
-      #         "ico": "image/x-icon",
-      #         "jpeg": "image/jpeg",
-      #         "jpg": "image/jpeg",
-      #         "js": "text/javascript",
-      #         "json": "application/json",
-      #         "png": "image/png",
-      #         "txt": "text/plain",
-      #         "xml": "text/xml"
-      #       }
-      #     log: "log.txt"
-      #     logTime: "false"
+runs:
+  using: 'composite'
+  steps:
 
-      - name: Github API Request
-        id: request
-        uses: octokit/request-action@v2.2.0
-        with:
-          route: ${{ github.event.issue.pull_request.url }}
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+    # Because the action is triggered by issue_comment event, actions/checkout only checkout the code from the default branch.
+    # We need to check out to the right PR's branch to capture the screenshot.
+    - name: Github API Request
+      if: ${{ github.event_name == 'issue_comment' }}
+      id: request
+      uses: octokit/request-action@v2.2.0
+      with:
+        route: ${{ github.event.issue.pull_request.url }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Checkout to right branch
-        uses: actions/checkout@v3
-        with:
-          token: ${{ github.token }}
-          ref: ${{ fromJson(steps.request.outputs.data).head.ref }}
+    - name: Checkout to right branch
+      if: ${{ github.event_name == 'issue_comment' }}
+      uses: actions/checkout@v3
+      with:
+        token: ${{ github.token }}
+        ref: ${{ fromJson(steps.request.outputs.data).head.ref }}
 
-      - name: Capture screenshot
-        id: captureScreen
-        env:
-          COMMENT_BODY: ${{ github.event.comment.body }}
-        run: |
-          echo "$COMMENT_BODY" |  perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s' > /tmp/play.yml
-          cat /tmp/play.yml
-          su - pptruser -c "node /pupptr-play/dist/index.js /tmp/play.yml"
+    - name: Capture screenshot
+      id: captureScreen
+      shell: bash
+      env:
+        COMMENT_BODY: |
+          "${{ github.event.comment.body }}"
+      run: |
+        echo "$COMMENT_BODY" | perl -0777 -ne 'print "$1\n" if /```yml\n(.*?)```/s' > /tmp/play.yml
+        cat /tmp/play.yml
+        su - pptruser -c "node /pupptr-play/dist/index.js /tmp/play.yml"
 
-      - name: Save screenshot
-        id: saveScreenshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshot
-          path: ${{ inputs.output }}
+    - name: Save screenshot
+      id: saveScreenshot
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshot
+        path: ${{ inputs.output }}
 
-      - name: Set Output
-        run: |
-          echo "screenshot=$(echo ${{ inputs.output }})" >> $GITHUB_OUTPUT
+    - name: Set Output
+      run: |
+        echo "screenshot=$(echo ${{ inputs.output }})" >> $GITHUB_OUTPUT
+      shell: bash
 
-      - name: Update PR's comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ github.event.comment.id }}
-          body: "[screenshot archive](${{ steps.saveScreenshot.outputs.artifact-url }})"
-          reactions: eyes
+    - name: Update PR's comment
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ github.event.comment.id }}
+        body: "[screenshot archive](${{ steps.saveScreenshot.outputs.artifact-url }})"
+        reactions: eyes
 
-      - name: Github API Request
-        uses: octokit/request-action@v2.2.0
-        with:
-          route: POST ${{ fromJson(steps.request.outputs.data).statuses_url }}
-          state: ${{ job.status }}
-          target_url: "${{ github.api_url }}/repos/${{ github.repository }}/actions/artifacts/${{ steps.saveScreenshot.outputs.artifact-id }}/zip"
-          context: "Screenshot / ${{ github.workflow }} (artifact)"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+    - name: Github API Request
+      if: ${{ github.event_name == 'issue_comment' }}
+      uses: octokit/request-action@v2.2.0
+      with:
+        route: POST ${{ fromJson(steps.request.outputs.data).statuses_url }}
+        state: ${{ job.status }}
+        target_url: "${{ github.api_url }}/repos/${{ github.repository }}/actions/artifacts/${{ steps.saveScreenshot.outputs.artifact-id }}/zip"
+        context: "Screenshot / ${{ github.workflow }} (artifact)"
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
